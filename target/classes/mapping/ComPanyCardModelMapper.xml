@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rrf.ssm.dao.CompanyCardModelDao">
+    <resultMap id="BaseResultMap" type="com.rrf.ssm.pojo.CompanyCardModel">
+        <id column="card_id" jdbcType="VARCHAR" property="cardid" />
+        <result column="member_id" jdbcType="VARCHAR" property="memberId" />
+        <result column="company_name" jdbcType="VARCHAR" property="companyName" />
+        <result column="business_info" jdbcType="VARCHAR" property="businessInfo" />
+        <result column="contact" jdbcType="VARCHAR" property="contact" />
+        <result column="member_name" jdbcType="VARCHAR" property="membername" />
+        <result column="state" jdbcType="INTEGER" property="state" />
+        <result column="cardName" jdbcType="VARCHAR" property="cardName" />
+        <association property="member" javaType="com.rrf.ssm.pojo.UserInfoModel">
+            <result column="member_nickname" property="membernickname" />
+        </association>
+    </resultMap>
+
+    <insert id="createCard" parameterType="com.rrf.ssm.pojo.CompanyCardModel">
+        insert into
+        companycard
+            (card_id,member_id,company_name,business_info,contact,member_name,state,cardName)
+        values
+            (#{cardid,jdbcType=VARCHAR},
+            #{memberId,jdbcType=VARCHAR},
+            #{companyName,jdbcType=VARCHAR},
+            #{businessInfo,jdbcType=VARCHAR},
+            #{contact,jdbcType=VARCHAR},
+            #{membername,jdbcType=VARCHAR},
+            #{state,jdbcType=INTEGER},
+            #{cardName,jdbcType=VARCHAR})
+      </insert>
+
+    <!--新增我收到的企业名片数据-->
+    <insert id="getMeCompanyCard" parameterType="com.rrf.ssm.pojo.RecvCardModel">
+        insert into
+        recvcard
+        <trim prefix="(" suffix=")">
+            card_id,member_id
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{cardid,jdbcType=VARCHAR},
+            #{memberid,jdbcType=VARCHAR},
+        </trim>
+    </insert>
+
+    <update id="updateCardInfo" parameterType="com.rrf.ssm.pojo.CompanyCardModel">
+        update companycard
+        <set>
+            <if test="companyName != null">
+                company_name = #{companyName,jdbcType=VARCHAR},
+            </if>
+            <if test="businessInfo != null">
+                business_info = #{businessInfo,jdbcType=VARCHAR},
+            </if>
+            <if test="contact != null">
+                contact = #{contact,jdbcType=VARCHAR},
+            </if>
+            <if test="cardName != null">
+                cardName = #{cardName,jdbcType=VARCHAR},
+            </if>
+            <if test="membername != null">
+                member_name = #{membername,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where card_id = #{cardid,jdbcType=VARCHAR}
+    </update>
+
+
+    <select id="getRecvCards" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select DISTINCT
+        c.card_id,company_name,business_info,contact,c.member_name,member.member_nickname
+        from
+        companycard c
+        LEFT JOIN recvcard r
+        on c.card_id = r.card_id
+        LEFT JOIN member on member.member_id = r.member_id
+        where
+        r.member_id = #{memberId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="getMyCreateCards" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+         companycard.card_id,company_name,business_info,contact,companycard.cardName,
+         companycard.member_name,member.member_nickname
+        from companycard
+        LEFT JOIN member on companycard.member_id = member.member_id
+        where companycard.member_id=#{memberId,jdbcType=VARCHAR}
+    </select>
+
+    <delete id="deleteCompanyCard" parameterType="java.lang.String">
+        delete from companycard where  card_id=#{cardid,jdbcType=VARCHAR};
+    </delete>
+</mapper>

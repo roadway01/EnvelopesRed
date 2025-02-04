@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rrf.ssm.dao.RecvPacketModelDao">
+
+	<resultMap id="RecvPacketMap" type="com.rrf.ssm.pojo.RecvPacketModel">
+		<id column="packet_id" jdbcType="VARCHAR" property="packetId" />
+		<result column="recv_id" jdbcType="VARCHAR" property="recvId" />
+		<result column="packet_type" jdbcType="VARCHAR" property="packetType" />
+		<result column="packet_money" jdbcType="VARCHAR" property="packetMoney" />
+		<result column="sendid" jdbcType="VARCHAR" property="sendId" />
+		<result column="timestamp" jdbcType="VARCHAR" property="timesTamp" />
+		<association property="user" javaType="com.rrf.ssm.pojo.UserInfoModel">
+			<id column="member_id" property="memberid"></id>
+			<result column="member_nickname" property="membernickname" />
+			<result column="head_url" property="headurl" />
+		</association>
+		<association property="send" javaType="com.rrf.ssm.pojo.SendPacketModel">
+			<id column="send_id" property="sendId"></id>
+			<result column="content" property="content" />
+		</association>
+	</resultMap>
+
+	<!-- 查询领取红包金额 -->
+	<select id="RecvPacket" parameterType="com.rrf.ssm.pojo.RecvPacketModel" resultType="java.lang.String">
+  	select 
+  		packet_money 
+  	from 
+  		recvpacket 
+  	where 
+  		packet_id = #{packetId,jdbcType=VARCHAR} 
+  	and 
+  		recv_id = #{recvId,jdbcType=VARCHAR} 
+  	and
+  		packet_type = #{packetType,jdbcType=VARCHAR};
+  </select>
+
+	<!-- 查询用户余额 -->
+	<select id="getBalance" parameterType="java.lang.String" resultType="java.lang.String">
+		select member_balance from member where member_id = #{memberid,jdbcType=VARCHAR}
+	</select>
+
+	<!-- 查询用户领取的红包 -->
+	<select id="getMyRecv" parameterType="java.lang.String" resultMap="RecvPacketMap">
+		select
+			member.member_nickname,member.head_url,recvpacket.*,sendpacket.send_id,sendpacket.content
+		from recvpacket
+		LEFT JOIN
+				sendpacket on recvpacket.sendid = sendpacket.send_id
+		LEFT JOIN
+				member on sendpacket.sender_id = member.member_id
+		where
+			recvpacket.recv_id = #{memberid,jdbcType=VARCHAR}
+		  ORDER BY sendpacket.`timestamp` DESC
+	</select>
+
+	<!-- 查询用户是不是领了该红包 -->
+	<select id="selectRecvOne" parameterType="java.lang.String" resultType="java.lang.Integer">
+		select count(1) from recvpacket where recv_id = #{recvid,jdbcType=VARCHAR} and sendid=#{sendId,jdbcType=VARCHAR}
+	</select>
+
+	<select id="selectGetCash" parameterType="java.lang.String" resultType="com.rrf.ssm.pojo.GetCashModel">
+		select * from getcash where id = #{id,jdbcType=VARCHAR}
+	</select>
+
+	<!-- 领取红包记录新增 -->
+	<insert id="SaveRecvPacket" parameterType="com.rrf.ssm.pojo.RecvPacketModel">
+		insert into recvpacket
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			packet_id,recv_id,packet_type,packet_money,sendid,timestamp,
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			#{packetId,jdbcType=VARCHAR},
+			#{recvId,jdbcType=VARCHAR},
+			#{packetType,jdbcType=VARCHAR},
+			#{packetMoney,jdbcType=VARCHAR},
+			#{sendId,jdbcType=VARCHAR},
+			#{timesTamp,jdbcType=VARCHAR},
+		</trim>;
+	</insert>
+
+	<!-- 提现 -->
+	<insert id="withdraw" parameterType="com.rrf.ssm.pojo.GetCashModel">
+		insert into getcash
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			id,member_id,money,type,timestamp
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			#{id,jdbcType=VARCHAR},
+			#{member_id,jdbcType=VARCHAR},
+			#{money,jdbcType=VARCHAR},
+			#{type,jdbcType=VARCHAR},
+			#{timesTamp,jdbcType=VARCHAR},
+		</trim>;
+	</insert>
+</mapper>

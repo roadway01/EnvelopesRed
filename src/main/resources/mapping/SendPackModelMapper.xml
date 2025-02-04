@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rrf.ssm.dao.SendPacketModelDao">
+    <resultMap id="BaseResultMap" type="com.rrf.ssm.pojo.SendPacketModel">
+        <id column="send_id" jdbcType="VARCHAR" property="sendId" />
+        <result column="sender_id" jdbcType="VARCHAR" property="senderId" />
+        <result column="packet_type" jdbcType="VARCHAR" property="packettype" />
+        <result column="packet_money" jdbcType="VARCHAR" property="packetmoney" />
+        <result column="packet_number" jdbcType="VARCHAR" property="packetnumber" />
+        <result column="card_id" jdbcType="VARCHAR" property="cardid" />
+        <result column="timestamp" jdbcType="VARCHAR" property="timestamp" />
+        <result column="imgUrls" jdbcType="VARCHAR" property="imgUrls" />
+        <result column="content" jdbcType="VARCHAR" property="content" />
+        <result column="state" jdbcType="VARCHAR" property="state" />
+        <result column="recvnumber" jdbcType="VARCHAR" property="recvnumber" />
+        <result column="remark" jdbcType="VARCHAR" property="remark" />
+        <result column="qrcode" jdbcType="VARCHAR" property="qrcode" />
+        <result column="over_money" jdbcType="VARCHAR" property="overmoney" />
+        <association property="user" javaType="com.rrf.ssm.pojo.UserInfoModel">
+            <id column="member_id" property="memberid"></id>
+            <result column="member_nickname" property="membernickname" />
+            <result column="head_url" property="headurl" />
+        </association>
+        <association property="company" javaType="com.rrf.ssm.pojo.CompanyCardModel">
+            <result column="company_name" jdbcType="VARCHAR" property="companyName" />
+            <result column="business_info" jdbcType="VARCHAR" property="businessInfo" />
+            <result column="contact" jdbcType="VARCHAR" property="contact" />
+            <result column="cardName" jdbcType="VARCHAR" property="cardName" />
+        </association>
+    </resultMap>
+
+    <resultMap id="RecvPacketMap" type="com.rrf.ssm.pojo.RecvPacketModel">
+        <id column="packet_id" jdbcType="VARCHAR" property="packetId" />
+        <result column="recv_id" jdbcType="VARCHAR" property="recvId" />
+        <result column="packet_type" jdbcType="VARCHAR" property="packetType" />
+        <result column="packet_money" jdbcType="VARCHAR" property="packetMoney" />
+        <result column="sendid" jdbcType="VARCHAR" property="sendId" />
+        <result column="timestamp" jdbcType="VARCHAR" property="timesTamp" />
+        <association property="user" javaType="com.rrf.ssm.pojo.UserInfoModel">
+            <result column="member_nickname" property="membernickname" />
+            <result column="head_url" property="headurl" />
+        </association>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        send_id,sender_id,packet_type,packet_money,packet_number,card_id,timestamp,imgUrls,content,recvnumber,remark,qrcode,over_money
+      </sql>
+
+    <!-- 发送红包 -->
+    <insert id="SendPacket" parameterType="com.rrf.ssm.pojo.SendPacketModel">
+        insert into sendpacket
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            send_id,sender_id,packet_type,packet_money,packet_number,card_id,timestamp,imgUrls,content,state,recvnumber,remark,qrcode,over_money
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{sendId,jdbcType=VARCHAR},
+            #{senderId,jdbcType=VARCHAR},
+            #{packettype,jdbcType=VARCHAR},
+            #{packetmoney,jdbcType=VARCHAR},
+            #{packetnumber,jdbcType=VARCHAR},
+            #{cardid,jdbcType=VARCHAR},
+            #{timestamp,jdbcType=VARCHAR},
+            #{imgUrls,jdbcType=VARCHAR},
+            #{content,jdbcType=VARCHAR},
+            #{state,jdbcType=VARCHAR},
+            #{recvnumber,jdbcType=VARCHAR},
+            #{remark,jdbcType=VARCHAR},
+            #{qrcode,jdbcType=VARCHAR},
+            #{overmoney,jdbcType=VARCHAR},
+        </trim>
+    </insert>
+
+    <!-- 根据发送红包id拿取领到该红包的用户信息 -->
+    <select id="getSendInfo" parameterType="java.lang.String" resultMap="RecvPacketMap">
+        SELECT
+        *
+        from
+            recvpacket
+        LEFT JOIN
+            member ON recvpacket.recv_id = member.member_id
+        where
+            recvpacket.sendid = #{sendId,jdbcType=VARCHAR}
+        ORDER BY recvpacket.`timestamp` DESC
+      </select>
+
+    <!-- 这个是有企业的转发红包 -->
+    <select id="Forward" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+          member.head_url,member.member_nickname,
+          companycard.cardName,companycard.contact,companycard.company_name,companycard.business_info,
+          sendpacket.imgUrls,sendpacket.remark,sendpacket.content,
+          sendpacket.packet_type,sendpacket.packet_money,sendpacket.packet_number,sendpacket.recvnumber,
+          sendpacket.send_id
+        from
+            sendpacket
+        LEFT JOIN
+            companycard ON sendpacket.sender_id = companycard.member_id
+        LEFT JOIN
+            member on sendpacket.sender_id = member.member_id
+        where
+            sendpacket.send_id = #{sendId,jdbcType=VARCHAR} and sendpacket.card_id = companycard.card_id
+        ORDER BY sendpacket.`timestamp` DESC
+    </select>
+
+    <!-- 这个是没有企业的转发红包 -->
+    <select id="notConmpanyForward" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+
+        member.head_url,member.member_nickname,
+
+        sendpacket.imgUrls,sendpacket.remark,sendpacket.content,sendpacket.packet_type,
+
+        sendpacket.packet_money,sendpacket.packet_number,sendpacket.recvnumber,
+
+        sendpacket.send_id
+
+        from sendpacket
+
+        LEFT JOIN member on sendpacket.sender_id = member.member_id
+
+        where sendpacket.send_id = #{sendId,jdbcType=VARCHAR}
+
+        ORDER BY sendpacket.`timestamp` DESC
+    </select>
+
+    <!-- 获取发出的红包信息  -->
+    <select id="getMySend" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from sendpacket where sendpacket.sender_id=#{memberid,jdbcType=VARCHAR} and sendpacket.state = '1'
+        ORDER BY sendpacket.`timestamp` DESC
+    </select>
+
+    <select id="getSendId" parameterType="java.lang.String" resultType="java.lang.String">
+  	select send_id from sendpacket where sendpacket.sender_id = #{senderId,jdbcType=VARCHAR} and sendpacket.state = '1'
+  </select>
+
+    <!-- 根据sendid拿到这条数据  -->
+    <select id="getMe" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select * from sendpacket where sendpacket.send_id=#{sendId,jdbcType=VARCHAR} and sendpacket.state = '1'
+      </select>
+
+    <!-- 用户金额的修改 -->
+    <update id="updateMOneyAndNum" parameterType="java.lang.String">
+        update sendpacket
+        <set>
+            <if test="packetnumber != null">
+                packet_number = #{packetnumber,jdbcType=VARCHAR},
+            </if>
+            <if test="recvnumber != null">
+                recvnumber = #{recvnumber,jdbcType=VARCHAR},
+            </if>
+            <if test="overmoney != null">
+                over_money = #{overmoney,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where send_id = #{sendId,jdbcType=VARCHAR}
+    </update>
+    <!-- 修改红包的状态 -->
+    <update id="updateRedPacketState" parameterType="java.lang.String">
+        update sendpacket
+        <set>
+            <if test="state != null">
+                state = #{state,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where send_id = #{sendId,jdbcType=VARCHAR}
+    </update>
+
+    <!-- 修改分享的二维码地址 -->
+    <update id="updateRedPacketqrcode" parameterType="java.lang.String">
+        update sendpacket
+        <set>
+            <if test="qrcode != null">
+                qrcode = #{qrcode,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where send_id = #{sendId,jdbcType=VARCHAR}
+    </update>
+</mapper>

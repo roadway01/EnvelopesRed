@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="CompanyRedPacket:war">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <root id="archive" name="EnvelopesRed-1.0.war">
+      <element id="artifact" artifact-name="CompanyRedPacket:war exploded" />
+    </root>
+  </artifact>
+</component>

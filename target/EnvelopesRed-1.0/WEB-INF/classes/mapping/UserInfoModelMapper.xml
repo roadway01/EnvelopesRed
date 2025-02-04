@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rrf.ssm.dao.UserInfoModelDao">
+  <resultMap id="BaseResultMap" type="com.rrf.ssm.pojo.UserInfoModel">
+    <id column="member_id" jdbcType="VARCHAR" property="memberid" />
+    <result column="member_name" jdbcType="VARCHAR" property="membername" />
+    <result column="member_nickname" jdbcType="VARCHAR" property="membernickname" />
+    <result column="member_balance" jdbcType="VARCHAR" property="memberbalance" />
+    <result column="head_url" jdbcType="VARCHAR" property="headurl" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    member_id,member_name,member_nickname,member_balance
+  </sql>
+  
+  <insert id="InsertUserInfo" parameterType="com.rrf.ssm.pojo.UserInfoModel">
+    insert into 
+    member 
+    	(member_id, member_name, member_nickname,member_balance,head_url)
+    values 
+    	(#{memberid,jdbcType=VARCHAR}, 
+    	#{membername,jdbcType=VARCHAR}, 
+    	#{membernickname,jdbcType=VARCHAR},
+    	#{memberbalance,jdbcType=VARCHAR},
+    	#{headurl,jdbcType=VARCHAR})
+  </insert>
+  
+  <select id="selectUserbalance" parameterType="java.lang.String" resultType="java.lang.Integer">
+  	select member_balance from member where member_id = #{memberid,jdbcType=VARCHAR}
+  </select>
+
+  <select id="selectUserName" parameterType="java.lang.String" resultType="java.lang.Integer">
+      select count(1) from member where member_id = #{memberid,jdbcType=VARCHAR}
+  </select>
+  
+  <update id="updateUserbalance" parameterType="java.lang.String">
+  		update member 
+	  	<set>
+	      <if test="memberbalance != null">
+	        member_balance = #{memberbalance,jdbcType=VARCHAR}
+	      </if>
+	    </set>
+	    where member_id = #{memberid,jdbcType=VARCHAR}
+  </update>
+    <!--修改用户的真是姓名-->
+  <update id="updatememberName" parameterType="java.lang.String">
+        update member
+        <set>
+            <if test="membername != null">
+                member_nickname = #{membername,jdbcType=VARCHAR}
+            </if>
+        </set>
+        where member_id=#{memberid,jdbcType=VARCHAR}
+    </update>
+</mapper>
